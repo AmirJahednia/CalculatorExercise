@@ -1,0 +1,249 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Drawing.Text;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Xml.Linq;
+
+namespace Calculator
+{
+    public partial class Calculator : Form
+    {
+        double x, y, z;
+        string op;
+        bool flag;
+        string history;
+
+        public Calculator()
+        {
+            InitializeComponent();
+        }
+
+        private void AccessButtonColors(Control container)
+        {
+            foreach (Control control in panel1.Controls)
+            {
+                if (control.BackColor == Color.White)
+                {
+                    control.BackColor = Color.Gray;
+                }
+                else if (control.BackColor == Color.Gray) 
+                control.BackColor = Color.White;
+
+            }
+        }
+        private void SetRegularFontForControls(Control container)
+        {
+            foreach (Control x in container.Controls)
+            {
+                x.Font = new Font(x.Font, FontStyle.Regular);
+            }
+        }
+        private void CalMainFun()
+        {
+            y = Convert.ToDouble(txtDisplay.Text);
+            switch (op)
+            {
+                case "+":
+                    z = x + y;
+                    break;
+                case "-":
+                    z = x - y;
+                    break;
+                case "*":
+                    z = x * y;
+                    break;
+                case "/":
+                    z = x / y;
+                    break;
+            }
+        }
+
+        private void MouseClickColor(Button clickedButton, MouseEventArgs e)
+        {
+            foreach (Button button in panel1.Controls.OfType<Button>())
+            {
+                if (button != clickedButton)
+                {
+                    button.Font = new Font(button.Font, FontStyle.Regular);
+                }
+            }
+            clickedButton.Font = new Font(clickedButton.Font, FontStyle.Bold);
+        }
+
+        private void ExcErrorMessage()
+        {
+            txtHistory.Text = "Input is invalid.";
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            txtDisplay_TextChanged(null, null);
+            btnOnOff.Enabled = true;
+        }
+
+        private void btnEqual_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (op == null || txtDisplay.Text == "")
+                {
+                    txtHistory.Text = "Operator or Operand is missing!";
+                    return;
+                }
+                SetRegularFontForControls(panel1);
+                CalMainFun();
+            }
+            catch
+            {
+                ExcErrorMessage();
+            }
+
+            history = "";
+            history += $"{x} {op} {y} = \r\n";
+            txtHistory.Text = history;
+            txtDisplay.Text = z.ToString();
+            op = null;
+        }
+
+        private void txtDisplay_TextChanged(object sender, EventArgs e)
+        {
+            btnpoint.Enabled = !txtDisplay.Text.Contains(".");
+            btnbackSpace.Enabled = Convert.ToBoolean(txtDisplay.Text.Length);
+            if (txtDisplay.TextLength == 0)
+                txtHistory.Clear();
+        }
+
+        private void btnbackSpace_Click(object sender, EventArgs e)
+        {
+            txtDisplay.Text = Convert.ToString(txtDisplay.Text.Substring(0, txtDisplay.Text.Length - 1));
+        }
+
+        private void CalculatorKeyPress(object sender, KeyPressEventArgs e)
+        {
+            Button temp = new Button();
+            temp.Text = e.KeyChar.ToString();
+            if (e.KeyChar >= '0' && e.KeyChar <= '9')
+                Numbers(temp, null);
+            else if (e.KeyChar == '-' && txtDisplay.Text == "")
+                txtDisplay.Text = "-";
+            else if (e.KeyChar == '+' || e.KeyChar == '-' || e.KeyChar == '*' || e.KeyChar == '/')
+                Operators(temp, null);
+            else if (e.KeyChar == '=')
+                btnEqual_Click(null, null);
+            else if (e.KeyChar == '.' && !txtDisplay.Text.Contains("."))
+                Numbers(temp, null);
+            else if (e.KeyChar == '\b' && txtDisplay.TextLength > 0)
+                btnbackSpace_Click(null, null);
+
+                foreach (Button x in panel1.Controls)
+                {
+                    if (x.Text == e.KeyChar.ToString() && panel1.Enabled)
+                    {
+                        x.Font = new Font(x.Font, FontStyle.Bold);
+                        x.Focus();
+                    }
+                    else
+                    {
+                        x.Font = new Font(x.Font, FontStyle.Regular);
+                    }
+                }
+        }
+
+        private void Calculator_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                btnEqual_Click(null, null);
+                btnEqual.Focus();
+            }
+            if(e.KeyCode == Keys.Delete)
+            {
+                Clear_Click(null, null);
+                btnClear.Focus();
+                
+            }
+
+        }
+
+        private void btnOnOff_Click(object sender, EventArgs e)
+        {
+            panel1.Enabled = !panel1.Enabled;
+            if (btnOnOff.Text == "Off")
+            {
+                btnOnOff.BackColor = Color.LightCyan;
+                btnOnOff.ForeColor = Color.Black;
+                btnOnOff.Text = "On";
+                panel1.Enabled = false;
+                SetRegularFontForControls(panel1);
+                AccessButtonColors(panel1);
+                this.KeyPreview = false;
+                txtDisplay.Text = string.Empty;
+                txtHistory.Text = string.Empty;
+                txtHistory.BackColor = Color.Gray;
+                txtDisplay.BackColor = Color.Gray;
+            }
+            else
+            {
+                btnOnOff.Text = "Off";
+                btnOnOff.BackColor = Color.Gray;
+                btnOnOff.ForeColor = Color.White;
+                panel1.Enabled = true;
+                this.KeyPreview = true;
+                AccessButtonColors(panel1);
+                btn1.Select();
+                txtHistory.BackColor = Color.White;
+                txtDisplay.BackColor = Color.White;
+
+            }
+        }
+
+        private void Clear_Click(object sender, EventArgs e)
+        {
+            txtDisplay.Text = "";
+            txtHistory.Text = "";
+
+            x = 0.0;
+            y = 0.0;
+            z = 0.0;
+        }
+
+        private void Operators(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                if (op != null)
+                    btnEqual_Click(null, null);
+                x = Convert.ToDouble(txtDisplay.Text);
+                op = ((Button)sender).Text;
+                flag = true;
+                MouseClickColor((Button)sender, e);
+            }
+            catch
+            {
+                if (txtDisplay.Text == "" && ((Button)sender).Text == "-")
+                {
+                    txtDisplay.Text = "-";
+                }
+                else
+                {
+                    ExcErrorMessage();
+                }
+            }
+        }
+
+        private void Numbers(object sender, MouseEventArgs e)
+        {
+            if (flag == true)
+                txtDisplay.Text = string.Empty;
+            txtDisplay.Text += ((Button)sender).Text;
+            flag = false;
+            MouseClickColor((Button)sender, e);
+        }
+    }
+}
